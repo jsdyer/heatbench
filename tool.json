@@ -1,16 +1,22 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
-  "category": "security",
-  "tags": ["text", "lines", "duplicates"],
-  "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "id": "heatbench",
+  "title": "Heat Bench",
+  "description": "Compare home heating costs from your annual energy use, fuel prices and heat-pump performance assumptions.",
+  "category": "money",
+  "tags": [
+    "heating",
+    "heat pumps",
+    "energy",
+    "costs",
+    "Canada"
+  ],
+  "icon": "thermometer",
+  "url": "/heatbench/",
+  "source": "https://github.com/jsdyer/heatbench",
   "hosting": "project",
   "access": "browser",
   "data_info": {
     "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "detail": "Local calculations from visitor-entered energy use and prices, with NRCan fuel conversion factors."
   }
 }

@@ -1,37 +1,10 @@
-import { cleanLines } from './model.mjs';
-const input = document.querySelector('#input');
-const output = document.querySelector('#output');
-const status = document.querySelector('#status');
-const copy = document.querySelector('#copy');
-function update() {
-  const result = cleanLines(input.value);
-  output.value = result.text;
-  status.textContent = `${result.count} unique ${result.count === 1 ? 'line' : 'lines'}; ${result.removed} ${result.removed === 1 ? 'duplicate' : 'duplicates'} removed.`;
-  copy.disabled = result.count === 0;
-}
-input.addEventListener('input', update);
-document.querySelector('#sample').addEventListener('click', () => {
-  input.value = '  Halifax\nLangley\nHalifax\n\nVancouver  ';
-  update();
-});
-document.querySelector('#clear').addEventListener('click', () => {
-  input.value = '';
-  update();
-  input.focus();
-});
-if (navigator.clipboard && window.isSecureContext) {
-  copy.hidden = false;
-  copy.disabled = true;
-  copy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(output.value);
-      status.textContent = 'Result copied.';
-    } catch {
-      output.focus();
-      output.select();
-      status.textContent = 'Copy was unavailable. The result is selected so you can copy it manually.';
-    }
-  });
-}
-// Namespace future preference storage as coolcode:<tool-id>:<key>.
-// Do not persist pasted text or uploads by default.
+import{calculate,csv}from'./model.mjs';
+const $=s=>document.querySelector(s),money=n=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(n),key='coolcode:heatbench:scenarios:v1';
+const config=await fetch('./defaults.json').then(r=>{if(!r.ok)throw Error('Cannot load assumptions');return r.json()});
+let output=null,current={};const fields=Object.keys(config.defaults);let saved=[];try{saved=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(saved))saved=[]}catch{}
+function read(){return Object.fromEntries(fields.map(k=>[k,$('#'+k).value]))}function fill(s){for(const k of fields)$('#'+k).value=s[k]??config.defaults[k];render()}
+function metric(label,value,note){const d=document.createElement('div');d.className='metric';const strong=document.createElement('strong');strong.textContent=value;const span=document.createElement('span');span.textContent=label;d.append(strong,span);if(note){const small=document.createElement('small');small.textContent=note;d.append(small)}return d}
+function render(){current=read();$('#efficiency').disabled=['electric','delivered'].includes(current.fuel);try{output=calculate(current);$('#error').hidden=true;$('#results').replaceChildren(metric('Delivered space heat',Math.round(output.heat).toLocaleString()+' kWh/year'),metric('Current heating cost',money(output.baseline)),metric('Heat-pump scenario',money(output.lowCost)+' – '+money(output.highCost),'Includes the selected backup share and maintenance difference.'),metric('Annual savings range',money(output.savingsLow)+' – '+money(output.savingsHigh),'Negative savings mean higher costs.'),metric('Electric resistance at the same heat demand',money(output.resistance)),metric('Simple payback',output.paybackLow===null?'Not reached':output.paybackHigh===null?output.paybackLow.toFixed(1)+' years to not reached':output.paybackLow.toFixed(1)+' – '+output.paybackHigh.toFixed(1)+' years'));$('#export').disabled=false;$('#save').disabled=false}catch(e){output=null;$('#results').replaceChildren();$('#error').textContent=e.message;$('#error').hidden=false;$('#export').disabled=true;$('#save').disabled=true}}
+function showSaved(){$('#saved').replaceChildren();saved.forEach((s,i)=>{const row=document.createElement('article'),h=document.createElement('h3'),p=document.createElement('p'),b=document.createElement('button'),d=document.createElement('button');h.textContent=s.name;p.textContent='Saved '+new Date(s.at).toLocaleDateString('en-CA');b.textContent='Load';d.textContent='Remove';d.className='secondary';b.onclick=()=>fill(s.inputs);d.onclick=()=>{saved.splice(i,1);store()};const actions=document.createElement('div');actions.className='actions';actions.append(b,d);row.append(h,p,actions);$('#saved').append(row)})}
+function store(){try{localStorage.setItem(key,JSON.stringify(saved));$('#status').textContent='Saved on this device.'}catch{$('#status').textContent='Browser storage is unavailable; use Export CSV.'}showSaved()}
+$('#inputs').addEventListener('input',render);$('#inputs').addEventListener('submit',e=>e.preventDefault());$('#save').onclick=()=>{if(!output)return;saved.push({name:$('#scenarioName').value.trim()||'Heating scenario',at:new Date().toISOString(),inputs:current});store()};$('#reset').onclick=()=>fill(config.defaults);$('#export').onclick=()=>{if(!output)return;const a=document.createElement('a'),u=URL.createObjectURL(new Blob([csv(current,output)],{type:'text/csv'}));a.href=u;a.download='heatbench-scenario.csv';a.click();URL.revokeObjectURL(u)};fill(config.defaults);showSaved();

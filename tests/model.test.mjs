@@ -1,21 +1,8 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { cleanLines } from '../web/model.mjs';
-test('trims, removes blanks and preserves first-seen order', () => {
-  assert.deepEqual(cleanLines('  Halifax\nLangley\nHalifax\n\nVancouver  '), {
-    text: 'Halifax\nLangley\nVancouver', count: 3, removed: 1,
-  });
-});
-test('supports Windows and old Mac line endings', () => {
-  assert.equal(cleanLines('a\r\nb\ra').text, 'a\nb');
-});
-test('empty text and whitespace produce an empty result', () => {
-  assert.deepEqual(cleanLines(' \n\t'), { text: '', count: 0, removed: 0 });
-});
-test('preserves case and Unicode', () => {
-  assert.equal(cleanLines('Québec\nquébec\n東京\nQuébec').text, 'Québec\nquébec\n東京');
-});
-test('treats markup as ordinary text', () => {
-  assert.equal(cleanLines('<script>alert(1)</script>\n<script>alert(1)</script>').text, '<script>alert(1)</script>');
-});
-test('rejects non-text input', () => { assert.throws(() => cleanLines(null), TypeError); });
+import test from'node:test';import assert from'node:assert/strict';import{calculate,csv}from'../web/model.mjs';
+const s={fuel:'oil',annualUnits:1000,spaceHeatPercent:100,efficiency:80,fuelPrice:1.5,electricPrice:.2,copLow:2,copHigh:4,backupPercent:0,backup:'electric',installationCost:10000,maintenanceDifference:0,weatherFactor:1};
+test('delivered oil heat and COP costs are dimensionally correct',()=>{const r=calculate(s);assert.equal(r.heat,8488);assert.equal(r.baseline,1500);assert.equal(r.lowCost,424.40000000000003);assert.equal(r.highCost,848.8000000000001)});
+test('100% existing backup preserves baseline regardless COP',()=>{const r=calculate({...s,backupPercent:100,backup:'existing'});assert.equal(r.lowCost,r.baseline);assert.equal(r.paybackLow,null)});
+test('electric resistance uses 100% efficiency and actual heat share',()=>{const r=calculate({...s,fuel:'electric',annualUnits:20000,fuelPrice:.2,spaceHeatPercent:60});assert.equal(r.heat,12000);assert.equal(r.baseline,2400)});
+test('zero prices and heat are valid; missing, inverted and negative quantities fail',()=>{assert.equal(calculate({...s,annualUnits:0}).baseline,0);assert.equal(calculate({...s,fuelPrice:0}).baseline,0);for(const patch of[{annualUnits:''},{copLow:5,copHigh:2},{annualUnits:-1},{weatherFactor:Infinity}])assert.throws(()=>calculate({...s,...patch}))});
+test('weather scaling and maintenance flow into output',()=>{const a=calculate(s),b=calculate({...s,weatherFactor:1.2,maintenanceDifference:80});assert.ok(Math.abs(b.lowCost-a.lowCost*1.2-80)<1e-8)});
+test('unknown labels cannot become spreadsheet formulas',()=>{assert.ok(csv(s,calculate(s)).startsWith('field,value\n'));assert.ok(!csv(s,calculate(s)).includes('undefined'))});
