@@ -21,3 +21,7 @@ Edit `config/defaults.json` for documented starting assumptions and source refer
 Run `node --test tests/*.test.mjs`, `python3 -m unittest discover -s tests -v`, `python3 scripts/build.py`. Preview `dist/` with a local HTTP server. The Pages workflow tests desktop/mobile interaction and publishes successful main builds. Set GitHub Pages source to GitHub Actions. No secrets, Cloudflare API handler, watchdog target or refresh guard is needed; the standard CoolCode visit counter uses the `heatbench` ID.
 
 Inputs do not leave the browser. Explicitly saved scenarios use `coolcode:heatbench:scenarios:v1`; clearing site storage removes them. The standard visit counter never receives scenario values. Reference factors reviewed 2026-11-26 UTC.
+
+## Ready-to-use example
+
+[Electric Baseboard vs Heat Pump Cost Calculator](https://coolcode.ca/heatbench/electric-baseboard-heat-pump.html) opens this scenario in the same tool. Start with 12,000 kWh of electric baseboard heating a year at an example $0.18 per kWh. The heat-pump comparison uses a range of seasonal efficiencies. Enter the heating portion of your electricity bill and your own price.
