@@ -10,7 +10,7 @@
     "costs",
     "Canada"
   ],
-  "icon": "thermometer",
+  "icon": "lightbulb",
   "url": "/heatbench/",
   "source": "https://github.com/jsdyer/heatbench",
   "hosting": "project",
